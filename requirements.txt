@@ -1,6 +1,4 @@
-
-gradio
-pypdf
-transformers>=4.30.0
-torch
 streamlit
+transformers
+torch
+PyPDF2
