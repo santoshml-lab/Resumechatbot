@@ -32,7 +32,7 @@ def extract_text(file):
                 text += page_text + "\n"
     return text
 
-uploaded_file = st.file_uploader("Santosh_Yadav=Resume.pdf". type=["pdf"])
+uploaded_file = st.file_uploader("Upload Santosh_Yadav_Resume.pdf", type=["pdf"])
 
 context = ""
 
