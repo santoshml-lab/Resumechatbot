@@ -9,7 +9,12 @@ resume_text = ""
 for page in reader.pages:
     resume_text += page.extract_text()
 
-qa = pipeline("question-answering")
+from transformers import pipeline
+
+qa = pipeline(
+    "question-answering",
+    model="distilbert-base-cased-distilled-squad"
+)
 
 def chatbot(question):
     result = qa(
