@@ -5,10 +5,9 @@ from transformers import pipeline
 
 st.set_page_config(page_title="Resume AI Bot", page_icon="🤖")
 
-st.title("🤖 Resume AI Chatbot (Final Pro Version)")
-st.write("Upload your resume and ask anything like a boss.")
+st.title("🤖 Resume Chatbot")
 
-# Load model safely
+# Model load
 @st.cache_resource
 def load_model():
     from transformers import pipeline
@@ -19,39 +18,43 @@ def load_model():
 
 qa = load_model()
 
-# PDF TEXT EXTRACTION (safe + fallback ready)
-def extract_pdf(file):
-    text = ""
+# SESSION STATE FIX (MOST IMPORTANT)
+if "context" not in st.session_state:
+    st.session_state.context = ""
+
+# FILE UPLOAD
+uploaded_file = st.file_uploader("Upload Resume (Santosh_Yadav_Resume.pdf)", type=["pdf"])
+
+# DEBUG VISIBILITY (IMPORTANT)
+if uploaded_file:
+    st.success(f"File uploaded: {uploaded_file.name}")
+
     try:
-        with pdfplumber.open(file) as pdf:
+        with pdfplumber.open(uploaded_file) as pdf:
+            text = ""
             for page in pdf.pages:
                 page_text = page.extract_text()
                 if page_text:
                     text += page_text + "\n"
-    except:
-        return ""
 
-    return text
+        st.session_state.context = text
 
-uploaded_file = st.file_uploader("Upload Resume (Santosh_Yadav_Resume.docx)", type=["docx"])
+        if text.strip() == "":
+            st.error("⚠️ PDF se text extract nahi ho raha (scanned file ho sakta hai)")
+        else:
+            st.success("Resume loaded successfully ✅")
 
-context = ""
+    except Exception as e:
+        st.error(f"Error reading file: {e}")
 
-if uploaded_file:
-    context = extract_pdf(uploaded_file)
+# SHOW CONTEXT DEBUG (IMPORTANT)
+st.write("DEBUG - Context Length:", len(st.session_state.context))
 
-    if context.strip() == "":
-        st.error("⚠️ PDF readable text nahi hai (scanned file ho sakta hai)")
-        st.info("Tip: Word file se 'Save as text-based PDF' try karo")
-    else:
-        st.success("Resume loaded successfully ✅")
+# QUESTION INPUT
+question = st.text_input("Ask question:")
 
-question = st.text_input("Ask your question:")
-
-if question and context.strip():
-    result = qa(question=question, context=context)
-
-    st.markdown("### Answer:")
+if question and st.session_state.context:
+    result = qa(question=question, context=st.session_state.context)
     st.success(result["answer"])
 
 elif question:
