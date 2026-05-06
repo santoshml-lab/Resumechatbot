@@ -33,7 +33,7 @@ def extract_pdf(file):
 
     return text
 
-uploaded_file = st.file_uploader("Upload Resume (Santosh_Yadav_Resume.pdf)", type=["pdf"])
+uploaded_file = st.file_uploader("Upload Resume (Santosh_Yadav_Resume.docx)", type=["docx"])
 
 context = ""
 
