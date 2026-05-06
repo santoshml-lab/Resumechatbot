@@ -1,24 +1,29 @@
 import streamlit as st
 import pdfplumber
-from transformers import pipeline
+import requests
 
-st.set_page_config(page_title="Resume AI Chatbot", page_icon="🤖")
+st.title("🤖 Resume Chatbot (API Version)")
 
-st.title("🤖 Resume AI Chatbot (Pro Version)")
-st.write("Upload your resume and ask anything about it.")
+# 🔑 HuggingFace API token (optional but recommended)
+HF_API_KEY = "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"
 
-# Load model safely
-@st.cache_resource
-def load_model():
-    return pipeline(
-        "question-answering",
-        model="deepset/roberta-base-squad2"
-    )
+API_URL = "https://api-inference.huggingface.co/models/deepset/roberta-base-squad2"
 
-qa = load_model()
+headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
-# Extract PDF text
-def extract_text_from_pdf(file):
+def ask_api(question, context):
+    payload = {
+        "inputs": {
+            "question": question,
+            "context": context
+        }
+    }
+
+    response = requests.post(API_URL, headers=headers, json=payload)
+    return response.json()
+
+# PDF extract
+def extract_text(file):
     text = ""
     with pdfplumber.open(file) as pdf:
         for page in pdf.pages:
@@ -27,38 +32,23 @@ def extract_text_from_pdf(file):
                 text += page_text + "\n"
     return text
 
-# Simple chunking (important for long resumes)
-def chunk_text(text, size=800):
-    return [text[i:i+size] for i in range(0, len(text), size)]
+uploaded_file = st.file_uploader("Santosh_Yadav=Resume.pdf". type=["pdf"])
 
-uploaded_file = st.file_uploader("Santosh_Yadav_Resume.pdf", type=["pdf"])
-
-context_chunks = []
+context = ""
 
 if uploaded_file:
-    full_text = extract_text_from_pdf(uploaded_file)
+    context = extract_text(uploaded_file)
+    st.success("Resume loaded ✅")
 
-    if full_text.strip() == "":
-        st.error("PDF readable text nahi hai (maybe scanned image).")
+question = st.text_input("Ask question:")
+
+if question and context:
+    result = ask_api(question, context)
+
+    if isinstance(result, list):
+        st.success(result[0]["answer"])
     else:
-        context_chunks = chunk_text(full_text)
-        st.success("Resume loaded successfully ✅")
-
-question = st.text_input("Ask your question:")
-
-if question and context_chunks:
-    best_answer = ""
-    best_score = 0
-
-    # search best chunk
-    for chunk in context_chunks:
-        result = qa(question=question, context=chunk)
-        if result["score"] > best_score:
-            best_score = result["score"]
-            best_answer = result["answer"]
-
-    st.markdown("### Answer:")
-    st.success(best_answer)
+        st.error("API Error or model loading... try again")
 
 elif question:
     st.warning("Pehle resume upload karo 📄")
