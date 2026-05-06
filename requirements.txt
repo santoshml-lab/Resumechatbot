@@ -1,4 +1,4 @@
 transformers
 gradio
 pypdf
-torchvision
+torch
